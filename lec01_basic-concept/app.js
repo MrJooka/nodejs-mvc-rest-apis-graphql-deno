@@ -24,16 +24,25 @@ const server = http.createServer((req, res) => {
     return req.on("end", () => {
       const parsedBody = Buffer.concat(body).toString();
       const message = parsedBody.split("=")[1];
-      fs.writeFileSync("message.txt", message);
-      /*  하지만 아래코드가 리스너에서 등록되어 버린다면 16번째줄의 if문에서의 return이 사라져 38번째 코드 가 실행되어버린다.
-          리스너는 비동기로 실행되기 때문에 43번째에서 응답을 종료해버린 후
-          다시 비동기인 req.on('end) 리스너가 실행되기 때문에 res.end()를 다시 실행시키면서 에러를 발생시킨다
+      /* wirteFileSync는 Sync에서 알 수 있듯이 동기화 코드이다. 해당 코드 실행을 완료할 때까지 그 아래 코드들은 실행 되지 않는다.
+        여기서는 텍스트 몇개이지만, 예를 들어 수백 Giga 용량의 파일을 생성한다고 한다면.. 서버는 아예 멈춰버릴 것이다.
+        ==> 그래서 fs.writeFile메서드를 사용해야한다
+       */
+      // fs.writeFileSync("message.txt", message);
 
-          ==> req.on('end')구문 자체를 return 시켜서 if문 아래 코드가 실행되지 않게 한다
-      */
+      fs.writeFile("message.txt", message, (err) => {
+        res.statusCode = 302;
+        res.setHeader("Location", "/");
+        return res.end();
+      });
+      /* 아래 코드는 write파일이 정상적으로 생성된 후에야 실행되어야 하기때문에 writeFile 완료 이벤트 리스너로 옮긴다.
+      그래야 해당 리스너가 실행되어 오류가 나도 서버가 멈추는 일이 없기 때문이다.
+      
+      ** IMPORTANT NODE.JS SERVER 코드는 모드 이벤트 드라이븐 아키텍트를 바탕으로 짜야한다.
+
       res.statusCode = 302;
       res.setHeader("Location", "/");
-      return res.end();
+      return res.end(); */
     });
   }
 
