@@ -1,7 +1,10 @@
+const fs = require("fs");
 const http = require("http");
 
 const server = http.createServer((req, res) => {
   const url = req.url;
+  const method = req.method;
+
   if (url === "/") {
     res.write("<html>");
     res.write("<head><title>Enter Message</title></head>");
@@ -12,6 +15,13 @@ const server = http.createServer((req, res) => {
     );
     res.write("</html>");
     /* res.end()를 return 안해도 실행은 되지만 return으로 익명함수 실행을 종료한다. 리턴문 아래 코드들은 실행 안되게 하기 위해서다 */
+    return res.end();
+  }
+
+  if (url === "/message" && method === "POST") {
+    fs.writeFileSync("message.txt", "DUMMY");
+    res.statusCode = 302;
+    res.setHeader("Location", "/");
     return res.end();
   }
 
